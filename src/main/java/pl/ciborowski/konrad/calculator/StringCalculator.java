@@ -26,14 +26,13 @@ public class StringCalculator {
             delimiters = List.of(",", "\n");
             coreNumbersString = numbers;
         }
-        return addNumbers(coreNumbersString, delimiters);     
+        return addNumbers(coreNumbersString, delimiters);
     }
 
-  
     private List<String> extractDelimiters(String delimiterString) {
         List<String> delimiters = new LinkedList<>();
         int leftBracketIndex = 0;
-        while ((leftBracketIndex = delimiterString.indexOf('[', leftBracketIndex)) > -1) {
+        while ((leftBracketIndex = delimiterString.indexOf('[', leftBracketIndex)) > 0) {
             int rightBracketIndex = delimiterString.indexOf(']', leftBracketIndex);
             if (rightBracketIndex < 0) {
                 throw new IllegalArgumentException("Right bracket missing in " + delimiterString);
@@ -56,13 +55,7 @@ public class StringCalculator {
             return 0;
         }
         StringBuilder splitter = new StringBuilder();
-        delimiters.forEach(delimiter -> {
-            if (splitter.length() > 0) {
-                splitter.append("|");
-            }
-            splitter.append(quote(delimiter));
-        });
-        String tokens[] = numbers.split(splitter.toString());
+        String tokens[] = splitIntoTokens(delimiters, splitter, numbers);
         List<Integer> negatives = new LinkedList<>();
         int sum = 0;
         for (int i = 0; i < tokens.length; i++) {
@@ -82,11 +75,25 @@ public class StringCalculator {
         }
         if (negatives.isEmpty()) {
             return sum;
-        } else{
-            StringBuilder error = new StringBuilder(NEGATIVE_NUMBER_ERROR_MESSAGE);
-            error.append(negatives.stream().map(n -> valueOf(n)).collect(joining(",")));               
-            throw new IllegalArgumentException(error.toString());
+        } else {
+            throw buildExceptionWithNegatives(negatives);
         }
     }
-    
+
+    private IllegalArgumentException buildExceptionWithNegatives(List<Integer> negatives) throws IllegalArgumentException {
+        StringBuilder error = new StringBuilder(NEGATIVE_NUMBER_ERROR_MESSAGE);
+        error.append(negatives.stream().map(n -> valueOf(n)).collect(joining(",")));
+        throw new IllegalArgumentException(error.toString());
+    }
+
+    private String[] splitIntoTokens(List<String> delimiters, StringBuilder splitter, String numbers) {
+        delimiters.forEach(delimiter -> {
+            if (splitter.length() > 0) {
+                splitter.append("|");
+            }
+            splitter.append(quote(delimiter));
+        });
+        return numbers.split(splitter.toString());
+    }
+
 }
